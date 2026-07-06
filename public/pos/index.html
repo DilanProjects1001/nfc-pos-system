@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cacaos POS — Club Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- LOGIN -->
+    <div id="posLogin" class="pos-login">
+        <div class="login-wrapper">
+            <div class="login-card">
+                <div class="login-header">
+                    <span class="material-symbols-rounded" style="font-size: 3rem; color: var(--primary);">point_of_sale</span>
+                    <h2>Cacaos POS</h2>
+                    <p id="posLoginSubtitle" style="color: var(--on-surface-dim); margin-top:0.5rem;">Caja Registradora</p>
+                </div>
+
+                <div id="unifiedLoginSection">
+                    <div class="form-group">
+                        <label>Usuario / PIN</label>
+                        <input type="text" id="posUsername" placeholder="e.g. maria_barra">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="posPassword" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label>Seleccionar Terminal</label>
+                        <select id="posTerminalSelect" class="input-large">
+                            <!-- Populated automatically on load -->
+                        </select>
+                    </div>
+                </div>
+
+                <div id="posLoginError" class="login-error"></div>
+                
+                <button id="posLoginBtn" class="btn-primary" style="width: 100%; padding: 1rem; margin-top: 1rem; justify-content: center;">
+                    <span class="material-symbols-rounded">login</span> Iniciar Turno
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POS MAIN -->
+    <div id="posMain" style="display:none">
+        <!-- TOP BAR -->
+        <header class="pos-topbar">
+            <div class="topbar-left">
+                <span class="topbar-logo">🪙 Cacaos POS</span>
+            </div>
+            <div class="topbar-center">
+                <span class="topbar-terminal" id="posTerminalName">Terminal</span>
+            </div>
+            <div class="topbar-right">
+                <span class="topbar-vendor" id="posVendorName">Vendedor</span>
+                <span class="topbar-status" id="posConnectionStatus">
+                    <span class="status-dot-sm online"></span> Conectado
+                </span>
+                <span class="topbar-clock" id="posClock"></span>
+                <button class="btn-icon-light" onclick="posLogout()" title="Cerrar turno">
+                    <span class="material-symbols-rounded">logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="pos-layout">
+            <!-- LEFT: SIDEBAR CATEGORIES -->
+            <aside class="pos-sidebar">
+                <div class="sidebar-title">Menú Principal</div>
+                <div id="categoryTabs" style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <button class="cat-tab active" data-cat="all" onclick="filterCategory('all', this)">
+                        <span class="cat-icon">📋</span> Todos
+                    </button>
+                    <!-- Populated dynamically -->
+                </div>
+            </aside>
+
+            <!-- CENTER: CATALOG -->
+            <div class="pos-catalog">
+                <div class="catalog-search">
+                    <input type="text" id="productSearch" placeholder="🔍 Buscar producto en el menú..." class="search-input-pos">
+                </div>
+                <div class="catalog-grid" id="productGrid"></div>
+            </div>
+
+            <!-- RIGHT: CART -->
+            <div class="pos-cart">
+                <div class="cart-header">
+                    <h2>Orden Actual</h2>
+                    <button class="btn-ghost-sm" onclick="clearCart()" title="Vaciar orden">
+                        <span class="material-symbols-rounded">delete</span>
+                    </button>
+                </div>
+
+                <div class="cart-items" id="cartItems">
+                    <div class="cart-empty">
+                        <span class="material-symbols-rounded" style="font-size:3rem;color:var(--outline)">shopping_cart</span>
+                        <p>Agregue productos</p>
+                    </div>
+                </div>
+
+                <div class="cart-footer">
+                    <div class="cart-total">
+                        <span>Total</span>
+                        <span class="total-value" id="cartTotal">0 🪙</span>
+                    </div>
+                    <button class="btn-checkout" id="checkoutBtn" onclick="startCheckout()" disabled>
+                        💳 COBRAR
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHECKOUT MODAL -->
+        <div id="checkoutOverlay" class="checkout-overlay" style="display:none">
+            <!-- Step 1: Scan Card -->
+            <div id="checkoutStep1" class="checkout-modal">
+                <h2>Cobrar Orden</h2>
+                <div class="checkout-total">
+                    <span>Total a cobrar</span>
+                    <span class="checkout-amount" id="checkoutAmount">0 🪙</span>
+                </div>
+                <div class="nfc-section">
+                    <div class="nfc-animation">
+                        <div class="nfc-ring"></div>
+                        <div class="nfc-ring delay"></div>
+                        <span class="nfc-center-icon">📱</span>
+                    </div>
+                    <p class="nfc-label">Pase la tarjeta NFC</p>
+                </div>
+                <div class="manual-input">
+                    <label>O ingrese ID de tarjeta manualmente</label>
+                    <div class="input-row">
+                        <input type="text" id="checkoutCardId" placeholder="NFC-SIM-0001" class="input-mono-lg">
+                        <button class="btn-primary" onclick="lookupCard()">Buscar</button>
+                    </div>
+                </div>
+                <button class="btn-ghost" onclick="cancelCheckout()">Cancelar</button>
+            </div>
+
+            <!-- Step 2: Confirm -->
+            <div id="checkoutStep2" class="checkout-modal" style="display:none">
+                <h2>Confirmar Compra</h2>
+                <div class="checkout-member-info" id="checkoutMemberInfo"></div>
+                <div class="checkout-breakdown">
+                    <div class="breakdown-row">
+                        <span>Saldo actual</span>
+                        <span id="checkoutBalance">0 🪙</span>
+                    </div>
+                    <div class="breakdown-row highlight">
+                        <span>Compra</span>
+                        <span id="checkoutPurchase">-0 🪙</span>
+                    </div>
+                    <div class="breakdown-divider"></div>
+                    <div class="breakdown-row result">
+                        <span>Saldo restante</span>
+                        <span id="checkoutRemaining">0 🪙</span>
+                    </div>
+                </div>
+                <div class="checkout-actions">
+                    <button class="btn-confirm" onclick="confirmPurchase()">✅ Confirmar Compra</button>
+                    <button class="btn-ghost" onclick="backToStep1()">← Cambiar tarjeta</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Success -->
+            <div id="checkoutStep3" class="checkout-modal" style="display:none">
+                <div class="success-animation">
+                    <div class="success-check">✅</div>
+                    <h2>¡Compra Exitosa!</h2>
+                    <p class="success-detail" id="successDetail"></p>
+                    <p class="success-balance" id="successBalance"></p>
+                </div>
+                <button class="btn-primary btn-full" onclick="finishCheckout()">Nueva Orden</button>
+            </div>
+        </div>
+
+        <!-- VENDOR HISTORY DRAWER -->
+        <div id="historyDrawer" class="history-drawer" style="display:none">
+            <div class="drawer-header">
+                <h3>Transacciones del Turno</h3>
+                <button class="btn-icon-light" onclick="toggleHistory()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="drawer-body" id="vendorHistoryBody"></div>
+        </div>
+
+        <!-- FAB: History -->
+        <button class="fab" onclick="toggleHistory()" title="Ver historial del turno">
+            <span class="material-symbols-rounded">receipt_long</span>
+        </button>
+    </div>
+
+    <div id="posToast" class="toast"></div>
+    <script src="app.js"></script>
+</body>
+</html>

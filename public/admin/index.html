@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cacaos Admin — Club Demo</title>
+    <meta name="description" content="Panel de administración del Sistema Cacaos - Club Demo">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <div class="login-logo">🪙</div>
+            <h1>Club Demo</h1>
+            <p class="login-subtitle">Sistema Cacaos</p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="loginUser">Usuario</label>
+                    <input type="text" id="loginUser" placeholder="admin" autocomplete="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="loginPass">Contraseña</label>
+                    <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn-primary btn-full" id="loginBtn">Iniciar Sesión</button>
+                <p id="loginError" class="error-text" style="display:none"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="mainApp" class="app-layout" style="display:none">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <span class="logo-icon">🪙</span>
+                <div class="logo-text">
+                    <strong>Club Demo</strong>
+                    <small>Sistema Cacaos</small>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <span class="material-symbols-rounded">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-view="members">
+                    <span class="material-symbols-rounded">group</span>
+                    <span>Miembros</span>
+                </a>
+                <a href="#" class="nav-item" data-view="recharge">
+                    <span class="material-symbols-rounded">add_circle</span>
+                    <span>Recargar Cacaos</span>
+                </a>
+                <a href="#" class="nav-item" data-view="cashout">
+                    <span class="material-symbols-rounded">output</span>
+                    <span>Retiro / Cashout</span>
+                </a>
+                <a href="#" class="nav-item" data-view="history">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Historial</span>
+                </a>
+                <div class="nav-divider"></div>
+                <a href="#" class="nav-item" data-view="terminals">
+                    <span class="material-symbols-rounded">point_of_sale</span>
+                    <span>Terminales</span>
+                </a>
+                <a href="#" class="nav-item" data-view="alerts">
+                    <span class="material-symbols-rounded">notifications</span>
+                    <span>Notificaciones</span>
+                </a>
+                <a href="#" class="nav-item" data-view="products">
+                    <span class="material-symbols-rounded">inventory_2</span>
+                    <span>Productos</span>
+                </a>
+                <a href="#" class="nav-item" data-view="operators">
+                    <span class="material-symbols-rounded">admin_panel_settings</span>
+                    <span>Operadores</span>
+                </a>
+                <a href="#" class="nav-item" data-view="config">
+                    <span class="material-symbols-rounded">settings</span>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-info">
+                    <span id="userName">Admin</span>
+                    <small id="userRole">Administrador</small>
+                </div>
+                <button class="btn-icon" id="logoutBtn" title="Cerrar sesión">
+                    <span class="material-symbols-rounded">logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- ALERTS VIEW -->
+            <div id="view-alerts" class="view-section" style="display:none">
+                <div class="header-action">
+                    <h2>Notificaciones del Sistema</h2>
+                    <button class="btn-ghost" onclick="loadAlerts()">
+                        <span class="material-symbols-rounded">refresh</span> Actualizar
+                    </button>
+                </div>
+
+                <!-- Event Filters -->
+                <div class="search-bar" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <input type="text" id="alertTerminalFilter" placeholder="ID de Terminal" style="max-width: 150px;">
+                        <button class="btn-primary" onclick="filterAlerts()">Filtrar</button>
+                    </div>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Terminal</th>
+                                <th>Evento</th>
+                                <th>Descripción</th>
+                                <th>Operador</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsTableBody">
+                            <tr><td colspan="5" style="text-align:center;padding:2rem;">Cargando historial de eventos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ALERT BANNER -->
+            <div id="alertBanner" class="alert-banner" style="display:none">
+                <span class="material-symbols-rounded">warning</span>
+                <span id="alertText"></span>
+                <button class="btn-icon" onclick="document.getElementById('alertBanner').style.display='none'">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <!-- ============ DASHBOARD VIEW ============ -->
+            <div id="view-dashboard" class="view active">
+                <div class="view-header">
+                    <h1>Dashboard</h1>
+                    <span class="view-date" id="currentDate"></span>
+                </div>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Cacaos en Circulación</div>
+                        <div class="kpi-value" id="kpiCirculation">0 🪙</div>
+                        <div class="kpi-sub" style="display: flex; flex-direction: column; gap: 2px;">
+                            <span>Saldo activo disponible</span>
+                            <strong><span id="kpiTotalSold" style="color:var(--primary)">0</span> 🪙 vendidos en total</strong>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Miembros Activos</div>
+                        <div class="kpi-value" id="kpiMembers">0</div>
+                        <div class="kpi-sub"><span class="dot-green"></span> Registrados</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Transacciones Hoy</div>
+                        <div class="kpi-value" id="kpiTxToday">0</div>
+                        <div class="kpi-sub">Operaciones del día</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Ingresos Hoy</div>
+                        <div class="kpi-value" id="kpiRevenue">$0 MXN</div>
+                        <div class="kpi-sub" style="display: flex; flex-direction: column; gap: 2px;">
+                            <span>Recargas del día</span>
+                            <strong><span id="kpiCacaosSoldToday" style="color:var(--primary)">0</span> 🪙 vendidos hoy</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid two-col" style="margin-bottom: 2rem;">
+                    <div class="card">
+                        <h3>Actividad Semanal (Gastos)</h3>
+                        <p class="card-desc" style="margin-top:-10px;margin-bottom:10px;font-size:0.85rem">Transacciones de compra y cacaos gastados</p>
+                        <div class="chart-container" id="weeklyChartSpent"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Actividad Semanal (Recargas)</h3>
+                        <p class="card-desc" style="margin-top:-10px;margin-bottom:10px;font-size:0.85rem">Cacaos recargados por día</p>
+                        <div class="chart-container" id="weeklyChartRecharged"></div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid two-col">
+                    <div class="card">
+                        <h3>Últimas Transacciones</h3>
+                        <div class="table-responsive">
+                            <table class="data-table compact">
+                                <thead>
+                                    <tr><th>Hora</th><th>Miembro</th><th>Tipo</th><th>Monto</th><th>Terminal</th></tr>
+                                </thead>
+                                <tbody id="recentTxBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Estado de Terminales</h3>
+                        <div id="terminalStatusList" class="terminal-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ MEMBERS VIEW ============ -->
+            <div id="view-members" class="view">
+                <div class="view-header">
+                    <h1>Gestión de Miembros</h1>
+                    <button class="btn-primary" onclick="showModal('newMemberModal')">
+                        <span class="material-symbols-rounded">person_add</span> Nuevo Miembro
+                    </button>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="memberSearch" class="search-input" placeholder="Buscar por nombre, código o teléfono...">
+                    <div class="filter-chips">
+                        <button class="chip active" data-filter="all" onclick="filterMembers('all', this)">Todos</button>
+                        <button class="chip" data-filter="active" onclick="filterMembers('active', this)">Activos</button>
+                        <button class="chip" data-filter="suspended" onclick="filterMembers('suspended', this)">Suspendidos</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="membersTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th><th>Nombre</th><th>Teléfono</th>
+                                <th>Saldo</th><th>Tarjeta</th><th>Estado</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="membersPagination"></div>
+            </div>
+
+            <!-- ============ RECHARGE VIEW ============ -->
+            <div id="view-recharge" class="view">
+                <div class="view-header"><h1>Recargar Cacaos 🪙</h1></div>
+                <p class="view-subtitle">Funda los fondos del miembro utilizando NFC</p>
+                
+                <div class="recharge-grid">
+                    <!-- LEFT: NFC SCANNER -->
+                    <div class="card">
+                        <h3><span class="material-symbols-rounded">nfc</span> Tarjeta NFC</h3>
+                        <p class="card-desc">Pase la tarjeta por el lector NFC</p>
+                        <div class="nfc-pulse" id="nfcPulseRecharge">
+                            <div class="nfc-icon">📱</div>
+                        </div>
+                        <div class="input-group" style="margin-top: 1rem;">
+                            <label>O ingrese ID manualmente (Pruebas)</label>
+                            <input type="text" id="rechargeCardId" placeholder="NFC-SIM-0001" class="input-mono">
+                            <button class="btn-small" onclick="lookupCardForRecharge()">Buscar</button>
+                        </div>
+                        <!-- Name Display (No balance displayed) -->
+                        <div id="rechargeMemberBanner" style="display:none; margin-top: 1.5rem; padding: 1rem; background: var(--surface-hover); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.9rem; color: var(--on-surface-dim);">Miembro Identificado</div>
+                            <div id="rechargeMemberNameDisplay" style="font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-top: 0.5rem;"></div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: ADDER (SUMADOR) -->
+                    <div class="card" id="rechargeForm" style="opacity: 0.5; pointer-events: none;">
+                        <h3>Monto a Agregar</h3>
+                        <p class="card-desc">Utilice los botones rápidos o ingrese un monto</p>
+                        
+                        <div class="amount-section" style="margin-top: 1rem;">
+                            <div class="amount-input-wrapper">
+                                <input type="number" id="rechargeAmount" class="amount-input" placeholder="0" min="1">
+                                <span class="amount-unit">🪙 Cacaos</span>
+                            </div>
+                            <p class="amount-equivalent" id="rechargeEquivalent" style="margin-bottom:1rem;">Equivalente: $0 MXN</p>
+                            
+                            <!-- Adder Buttons -->
+                            <div class="quick-amounts" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button class="btn-primary" onclick="addRechargeAmount(1)">+ 1</button>
+                                <button class="btn-primary" onclick="addRechargeAmount(10)">+ 10</button>
+                                <button class="btn-primary" onclick="addRechargeAmount(100)">+ 100</button>
+                                <button class="btn-primary" onclick="addRechargeAmount(1000)">+ 1000</button>
+                                <button class="btn-ghost" onclick="setRechargeAmount(0)" style="margin-left:auto;">Borrar</button>
+                            </div>
+
+                            <div class="input-group" style="margin-top: 1.5rem;">
+                                <label>Nota (opcional)</label>
+                                <input type="text" id="rechargeNote" placeholder="Ej: Pago con efectivo">
+                            </div>
+                        </div>
+                        
+                        <div class="recharge-summary card-highlight" id="rechargeSummary" style="display:none; margin-top: 1rem;"></div>
+                        
+                        <div class="form-actions" style="margin-top: 1.5rem;">
+                            <button class="btn-primary btn-large" id="confirmRechargeBtn" onclick="confirmRecharge()" style="width: 100%;">
+                                ✅ Confirmar Recarga
+                            </button>
+                            <button class="btn-ghost" onclick="cancelRecharge()" style="width: 100%; margin-top: 0.5rem;">Cancelar y Expulsar Tarjeta</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ CASHOUT VIEW ============ -->
+            <div id="view-cashout" class="view">
+                <div class="view-header"><h1>Retiro / Cashout 💵</h1></div>
+                <p class="view-subtitle">Retire cacaos y devuelva efectivo al miembro</p>
+                
+                <div class="recharge-grid">
+                    <div class="card">
+                        <h3><span class="material-symbols-rounded">search</span> Buscar Miembro</h3>
+                        <div class="input-group">
+                            <input type="text" id="cashoutSearch" placeholder="Nombre, código o teléfono..." autocomplete="off">
+                        </div>
+                        <div id="cashoutSearchResults" class="search-results"></div>
+                    </div>
+                </div>
+
+                <div id="cashoutForm" class="card recharge-form" style="display:none">
+                    <div class="member-banner" id="cashoutMemberBanner"></div>
+                    <div class="amount-section">
+                        <h3>Monto de Retiro</h3>
+                        <div class="amount-input-wrapper">
+                            <input type="number" id="cashoutAmount" class="amount-input" placeholder="0" min="1">
+                            <span class="amount-unit">🪙 Cacaos</span>
+                        </div>
+                        <p class="amount-equivalent" id="cashoutEquivalent">Entregar al miembro: $0 MXN</p>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-danger btn-large" onclick="confirmCashout()">💵 Confirmar Retiro</button>
+                        <button class="btn-ghost" onclick="cancelCashout()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ HISTORY VIEW ============ -->
+            <div id="view-history" class="view">
+                <div class="view-header">
+                    <h1>Historial de Transacciones</h1>
+                    <button class="btn-ghost" onclick="exportHistory()">
+                        <span class="material-symbols-rounded">download</span> Exportar CSV
+                    </button>
+                </div>
+                <div class="filters-bar">
+                    <input type="date" id="historyDateFrom" class="date-input">
+                    <input type="date" id="historyDateTo" class="date-input">
+                    <select id="historyType" class="select-input">
+                        <option value="">Todos los tipos</option>
+                        <option value="recharge">Recargas</option>
+                        <option value="purchase">Compras</option>
+                        <option value="refund">Reembolsos</option>
+                        <option value="cashout">Retiros</option>
+                    </select>
+                    <select id="historyTerminal" class="select-input">
+                        <option value="">Todas las terminales</option>
+                    </select>
+                    <button class="btn-small" onclick="loadHistory()">Filtrar</button>
+                </div>
+                <div class="kpi-grid small">
+                    <div class="kpi-card mini green"><div class="kpi-label">Recargas</div><div class="kpi-value" id="histRecharges">+0 🪙</div></div>
+                    <div class="kpi-card mini blue"><div class="kpi-label">Compras</div><div class="kpi-value" id="histPurchases">-0 🪙</div></div>
+                    <div class="kpi-card mini orange"><div class="kpi-label">Reembolsos</div><div class="kpi-value" id="histRefunds">+0 🪙</div></div>
+                    <div class="kpi-card mini red"><div class="kpi-label">Retiros</div><div class="kpi-value" id="histCashouts">-0 🪙</div></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>ID</th><th>Fecha/Hora</th><th>Miembro</th><th>Tipo</th><th>Monto</th><th>Saldo Después</th><th>Terminal</th><th>Operador</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="historyBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="historyPagination"></div>
+            </div>
+
+            <!-- ============ TERMINALS VIEW ============ -->
+            <div id="view-terminals" class="view">
+                <div class="view-header">
+                    <h1>Terminales POS</h1>
+                    <button class="btn-primary" onclick="showModal('newTerminalModal')">
+                        <span class="material-symbols-rounded">add</span> Nueva Terminal
+                    </button>
+                </div>
+                <div id="terminalsGrid" class="terminals-grid"></div>
+            </div>
+
+            <!-- ============ PRODUCTS VIEW ============ -->
+            <div id="view-products" class="view">
+                <div class="view-header">
+                    <h1>Productos y Servicios</h1>
+                    <button class="btn-primary" onclick="showModal('newProductModal')">
+                        <span class="material-symbols-rounded">add</span> Nuevo Producto
+                    </button>
+                </div>
+                <div class="filters-bar">
+                    <select id="productTerminalFilter" class="select-input" onchange="loadProducts()">
+                        <option value="">Todas las terminales</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Terminal</th><th>Acciones</th></tr></thead>
+                        <tbody id="productsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ OPERATORS VIEW ============ -->
+            <div id="view-operators" class="view">
+                <div class="view-header">
+                    <h1>Operadores</h1>
+                    <button class="btn-primary" onclick="showModal('newOperatorModal')">
+                        <span class="material-symbols-rounded">person_add</span> Nuevo Operador
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody id="operatorsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ CONFIG VIEW ============ -->
+            <div id="view-config" class="view">
+                <div class="view-header"><h1>Configuración del Sistema</h1></div>
+                <div class="card" style="max-width: 600px">
+                    <div class="input-group">
+                        <label>Nombre del Negocio</label>
+                        <input type="text" id="cfgBusinessName" placeholder="Club Demo">
+                    </div>
+                    <div class="input-group">
+                        <label>Tasa de Cambio (1 Cacao = X MXN)</label>
+                        <input type="number" id="cfgExchangeRate" placeholder="10" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Requerir PIN para compras mayores a (0 = nunca)</label>
+                        <input type="number" id="cfgPinAbove" placeholder="0" min="0">
+                    </div>
+                    <button class="btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ MODALS ============ -->
+    <div id="modalOverlay" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+        <!-- New Member Modal -->
+        <div id="newMemberModal" class="modal" style="display:none">
+            <h2>Nuevo Miembro</h2>
+            <div class="input-group"><label>Nombre Completo *</label><input type="text" id="newMemberName" required></div>
+            <div class="input-group"><label>Teléfono</label><input type="text" id="newMemberPhone"></div>
+            <div class="input-group"><label>Email</label><input type="email" id="newMemberEmail"></div>
+            <div class="input-group"><label>PIN (opcional, 4 dígitos)</label><input type="text" id="newMemberPin" maxlength="4" pattern="\d{4}"></div>
+            <div class="input-group"><label>Tarjeta NFC UID *</label><input type="text" id="newMemberCardUid" placeholder="Ej: NFC-SIM-1234" required></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="createMember()">Crear Miembro</button>
+                <button class="btn-ghost" onclick="hideModals()">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- New Terminal Modal -->
+        <div id="newTerminalModal" class="modal" style="display:none">
+            <h2>Nueva Terminal</h2>
+            <div class="input-group"><label>Nombre *</label><input type="text" id="newTerminalName" placeholder="Ej: Barra VIP" required></div>
+            <div class="input-group"><label>Ubicación</label><input type="text" id="newTerminalLocation" placeholder="Ej: Segundo piso"></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="createTerminal()">Crear Terminal</button>
+                <button class="btn-ghost" onclick="hideModals()">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Terminal History Modal -->
+        <div id="terminalHistoryModal" class="modal" style="display:none; max-width: 600px;">
+            <h2 id="historyModalTitle">Historial de Terminal</h2>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead><tr><th>Día y Hora</th><th>Usuario</th><th>Evento</th></tr></thead>
+                    <tbody id="terminalHistoryBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button class="btn-ghost" onclick="hideModals()">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- New Product Modal -->
+        <div id="newProductModal" class="modal" style="display:none">
+            <h2>Nuevo Producto</h2>
+            <div class="input-group"><label>Icono / Emoji</label><input type="text" id="newProductIcon" placeholder="Ej: 🍺, 🍾, 🌮" value="📦"></div>
+            <div class="input-group"><label>Nombre *</label><input type="text" id="newProductName" required></div>
+            <div class="input-group"><label>Precio (Cacaos) *</label><input type="number" id="newProductPrice" min="1" required></div>
+            <div class="input-group"><label>Categoría</label><select id="newProductCategory">
+                <option value="Bebidas">🍹 Bebidas & Coctelería</option>
+                <option value="Cervezas">🍺 Cervezas</option>
+                <option value="Botellas VIP">🍾 Botellas VIP</option>
+                <option value="Comida">🌮 Food & Snacks</option>
+                <option value="Servicios">🛎️ Servicios / Otros</option>
+            </select></div>
+            <div class="input-group"><label>Terminal</label><select id="newProductTerminal">
+                <option value="">🌍 TODAS LAS TERMINALES (Global)</option>
+            </select></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="createProduct()">Crear Producto</button>
+                <button class="btn-ghost" onclick="hideModals()">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- New Operator Modal -->
+        <div id="newOperatorModal" class="modal" style="display:none">
+            <h2>Nuevo Operador</h2>
+            <div class="input-group"><label>Usuario *</label><input type="text" id="newOpUsername" required></div>
+            <div class="input-group"><label>Nombre Completo *</label><input type="text" id="newOpName" required></div>
+            <div class="input-group"><label>Contraseña *</label><input type="password" id="newOpPassword" required></div>
+            <div class="input-group">
+                <label>Rol *</label>
+                <select id="newOpRole"><option value="vendor">Vendedor</option><option value="admin">Administrador</option></select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="createOperator()">Crear Operador</button>
+                <button class="btn-ghost" onclick="hideModals()">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Refund Modal -->
+        <div id="refundModal" class="modal" style="display:none">
+            <h2>Confirmar Reembolso</h2>
+            <div id="refundDetails"></div>
+            <div class="input-group"><label>Motivo del reembolso *</label><input type="text" id="refundReason" placeholder="Ej: Producto defectuoso" required></div>
+            <div class="modal-actions">
+                <button class="btn-warning" id="confirmRefundBtn" onclick="confirmRefund()">🔄 Confirmar Reembolso</button>
+                <button class="btn-ghost" onclick="hideModals()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
