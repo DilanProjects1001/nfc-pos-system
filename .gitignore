@@ -1,0 +1,24 @@
+# deps
+node_modules/
+
+# env / secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+service-account.json
+*.pem
+*.key
+
+# real data — NEVER commit
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# logs / os
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
